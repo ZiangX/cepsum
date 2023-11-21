@@ -22,7 +22,7 @@ const puppeteer = require('puppeteer')
 	await popupPage.waitForSelector('input[type="password"]')
 	await popupPage.type('input[type="password"]', 'KpyYp75ND!KUzB2')
 
-	await popupPage.waitForSelector('#lnkPRALIBRE')
+	await popupPage.waitForSelector('#lnkPRALIBRE', { timeout: 120000 })
 	await popupPage.click('#lnkPRALIBRE')
 
 	// find an a element with the id contain "grdReservations-ajouter"
@@ -45,6 +45,10 @@ const puppeteer = require('puppeteer')
 			await new Promise(resolve => setTimeout(resolve, 400))
 
 			const input = document.querySelector(`input[value*="${dateStr}"]`)
+
+			const elements = document.querySelectorAll('a[id*="btnPlage"]')
+
+			console.log('elements', elements.length)
 			return input && input.value === dateStr
 		})
 		if (result) {
@@ -58,59 +62,105 @@ const puppeteer = require('puppeteer')
 	await new Promise(resolve => setTimeout(resolve, 200))
 
 	const timeslots = await popupPage.evaluate(async () => {
-		const elements = document.querySelectorAll('a')
-		const ts = []
+		const elements = document.querySelectorAll('a[id*="btnPlage"]')
 		for (const element of elements) {
 			// push if its text contains 17 or 18 or 19 or 20 or 21
 			if (
-				element.textContent.includes('19:') ||
+				element.textContent.includes('06:') ||
 				element.textContent.includes('20:') ||
 				element.textContent.includes('21:') ||
 				element.textContent.includes('22:')
 			) {
 				element.click()
 
-				await new Promise(resolve => setTimeout(resolve, 400))
+				await new Promise(resolve => setTimeout(resolve, 300))
+
+				// const btnConfirmer = document.querySelector('button[id*="btnConfirmer"]')
+				// btnConfirmer.click()
+
+				await new Promise(resolve => setTimeout(resolve, 300))
 
 				// get all options in the select element with the id contain CBOLOCAL and sort them by the text
 				const options = document.querySelectorAll('select[id*="CBOLOCAL"] option')
 
-				console.log('options', options)
-				const sortedOptions = [...options].sort((a, b) => {
-					if (a.text < b.text) {
-						return -1
+				const extractNumber = str => {
+					// Use a regular expression to match the number in the string
+					const match = str.match(/\d+/)
+
+					// Check if a match was found
+					if (match) {
+						// Extracted number as a string
+						const numberString = match[0]
+
+						// Convert the string to a number if needed
+						const numberValue = parseInt(numberString, 10)
+
+						// console.log(str, numberValue)
+					} else {
+						console.log('No number found in the string')
 					}
-					if (a.text > b.text) {
-						return 1
-					}
-					return 0
-				})
-				console.log('sortedOptions', sortedOptions)
+				}
+
+				// const sortedOptions = [...options]
+				// sortedOptions.sort((a, b) => {
+				// 	const formatedA = extractNumber(a.innerText)
+				// 	const formatedB = extractNumber(b.innerText)
+				// 	console.log('formatedA formatedB', a, formatedA, formatedB)
+				// 	if (formatedA < formatedB) {
+				// 		return -1
+				// 	}
+				// 	if (formatedA > formatedB) {
+				// 		return 1
+				// 	}
+				// 	return 0
+				// })
+				// console.log('sortedOptions', sortedOptions)
 
 				// // Loop through the sorted elements and find their original indices
 				// for (const element of sortedOptions) {
+				// 	if (
+				// 		element.innerText.includes('16') ||
+				// 		element.innerText.includes('17') ||
+				// 		element.innerText.includes('18')
+				// 	) {
+				// 		continue
+				// 	}
 				// 	const originalIndex = [...options].indexOf(element)
 				// 	console.log('originalIndex', originalIndex)
 				// 	options[originalIndex].selected = true
+				// 	return
 				// }
-				// select the first option
 
-				break
+				// options[3].selected = true
+
+				for (const option of options) {
+					console.log('option', option.innerText)
+
+					if (
+						option.innerText.includes('13') ||
+						option.innerText.includes('14') ||
+						option.innerText.includes('15')
+					) {
+						option.selected = true
+						return elements
+					}
+				}
 			}
 		}
-		return ts
+		return elements
 	})
 
 	console.log('timeslots', timeslots)
 
-	// click on the button with the id contain "btnConfirmer"
-	await new Promise(resolve => setTimeout(resolve, 200))
-	await popupPage.waitForSelector('button[id*="btnConfirmer"]')
-	await popupPage.click('button[id*="btnConfirmer"]')
-
+	// // reconfirm
 	// await new Promise(resolve => setTimeout(resolve, 200))
 	// await popupPage.waitForSelector('button[id*="btnConfirmer"]')
 	// await popupPage.click('button[id*="btnConfirmer"]')
+
+	// // btnFermer
+	// await new Promise(resolve => setTimeout(resolve, 200))
+	// await popupPage.waitForSelector('button[id*="btnFermer"]')
+	// await popupPage.click('button[id*="btnFermer"]')
 
 	// Close the browser
 	// await browser.close()
